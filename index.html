@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 费用计算器 - 找到最省钱的 AI 方案</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            padding: 30px 0;
+        }
+        
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            margin: 0 8px;
+            transition: all 0.3s;
+        }
+        
+        .step-dot.active {
+            background: #667eea;
+            transform: scale(1.2);
+        }
+        
+        .step-dot.completed {
+            background: #4caf50;
+        }
+        
+        .step-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .step-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .option-grid {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .option-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .option-card:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .option-card.selected {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        
+        .option-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        
+        .option-text {
+            flex: 1;
+        }
+        
+        .option-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .option-desc {
+            font-size: 13px;
+            color: #888;
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .checkbox-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-card:hover {
+            border-color: #667eea;
+        }
+        
+        .checkbox-card.selected {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        
+        .checkbox-icon {
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+        
+        .result-section {
+            text-align: center;
+        }
+        
+        .winner-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .winner-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .winner-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .winner-price {
+            font-size: 20px;
+            opacity: 0.95;
+        }
+        
+        .winner-reason {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            font-size: 14px;
+            text-align: left;
+        }
+        
+        .alternatives {
+            text-align: left;
+        }
+        
+        .alt-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .alt-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .alt-info {
+            flex: 1;
+        }
+        .alt-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .alt-desc {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .alt-price {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .savings-card {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .savings-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .savings-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4caf50;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            header h1 {
+                font-size: 24px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .winner-name {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI 费用计算器</h1>
+            <p>3步找到最省钱的 AI 方案</p>
+        </header>
+        
+        <div class="card">
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step-dot active" data-step="1"></div>
+                <div class="step-dot" data-step="2"></div>
+                <div class="step-dot" data-step="3"></div>
+            </div>
+            
+            <!-- 步骤 1：使用频率 -->
+            <div class="step-content" id="step1">
+                <h2 class="step-title">你打算怎么用 AI？</h2>
+                <p class="step-subtitle">选择最符合你使用习惯的选项</p>
+                
+                <div class="option-grid">
+                    <div class="option-card" data-value="light">
+                        <div class="option-icon">🌱</div>
+                        <div class="option-text">
+                            <div class="option-title">偶尔用用</div>
+                            <div class="option-desc">每周几次，想到才用</div>
+                        </div>
+                    </div>
+                    
+                    <div class="option-card" data-value="medium">
+                        <div class="option-icon">🌿</div>
+                        <div class="option-text">
+                            <div class="option-title">轻度使用</div>
+                            <div class="option-desc">每天1-2次，工作辅助</div>
+                        </div>
+                    </div>
+                    
+                    <div class="option-card" data-value="heavy">
+                        <div class="option-icon">🌳</div>
+                        <div class="option-text">
+                            <div class="option-title">重度依赖</div>
+                            <div class="option-desc">每天多次，学习工作必备</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤 2：使用用途 -->
+            <div class="step-content hidden" id="step2">
+                <h2 class="step-title">你主要用来做什么？</h2>
+                <p class="step-subtitle">可多选，我们会根据用途推荐最适合的平台</p>
+                
+                <div class="checkbox-grid">
+                    <div class="checkbox-card" data-value="chat">
+                        <div class="checkbox-icon">💬</div>
+                        <span>聊天对话、问问题</span>
+                    </div>
+                    
+                    <div class="checkbox-card" data-value="writing">
+                        <div class="checkbox-icon">✍️</div>
+                        <span>写文章、文案、邮件</span>
+                    </div>
+                    
+                    <div class="checkbox-card" data-value="coding">
+                        <div class="checkbox-icon">💻</div>
+                        <span>编程写代码、Debug</span>
+                    </div>
+                    
+                    <div class="checkbox-card" data-value="document">
+                        <div class="checkbox-icon">📄</div>
+                        <span>处理 PDF/文档总结</span>
+                    </div>
+                    
+                    <div class="checkbox-card" data-value="image">
+                        <div class="checkbox-icon">🎨</div>
+                        <span>生成图片</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤 3：结果展示 -->
+            <div class="step-content hidden" id="step3">
+                <div class="result-section">
+                    <div class="winner-card">
+                        <div class="winner-label">🏆 最省钱推荐</div>
+                        <div class="winner-name" id="winnerName">DeepSeek</div>
+                        <div class="winner-price" id="winnerPrice">预计每月：¥0-20</div>
+                        <div class="winner-reason" id="winnerReason">
+                            ✅ 免费额度充足，轻度使用完全够用<br>
+                            ✅ 适合你的使用频率 + 聊天/写作场景
+                        </div>
+                    </div>
+                    
+                    <div class="alternatives">
+                        <div class="alt-title">🥈 备选方案</div>
+                        
+                        <div class="alt-card">
+                            <div class="alt-info">
+                                <div class="alt-name">ChatGPT Plus</div>
+                                <div class="alt-desc">功能最全，生态丰富</div>
+                            </div>
+                            <div class="alt-price">¥140/月</div>
+                        </div>
+                        
+                        <div class="alt-card">
+                            <div class="alt-info">
+                                <div class="alt-name">文心一言会员</div>
+                                <div class="alt-desc">中文场景优化，访问稳定</div>
+                            </div>
+                            <div class="alt-price">¥59/月</div>
+                        </div>
+                    </div>
+                    
+                    <div class="savings-card" id="savingsCard">
+                        <div class="savings-title">💡 相比你现在的方案，每月可省</div>
+                        <div class="savings-amount" id="savingsAmount">¥100-140</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 按钮区域 -->
+            <div class="button-area" style="margin-top: 25px;">
+                <button class="btn btn-primary" id="nextBtn">下一步</button>
+                <button class="btn btn-secondary hidden" id="prevBtn">上一步</button>
+            </div>
+        </div>
+        
+        <footer style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px; font-size: 12px;">
+            <p>数据仅供参考，实际价格请以各平台官网为准</p>
+            <p style="margin-top: 5px;">© 2025 AI 费用计算器</p>
+        </footer>
+    </div>
+    
+    <script>
+        // 状态管理
+        let currentStep = 1;
+        let userData = {
+            frequency: null,
+            purposes: []
+        };
+        
+        // 价格数据（简化版）
+        const pricingData = {
+            deepseek: {
+                name: 'DeepSeek',
+                monthlyPrice: '¥0-20',
+                freeQuota: '500万token',
+                pros: ['免费额度充足', '中文能力强', '性价比高'],
+                bestFor: ['light', 'medium']
+            },
+            chatgpt: {
+                name: 'ChatGPT Plus',
+                monthlyPrice: '¥140',
+                freeQuota: '无免费额度',
+                pros: ['功能最全', '生态丰富', 'GPT-4最强'],
+                bestFor: ['heavy']
+            },
+            wenxin: {
+                name: '文心一言会员',
+                monthlyPrice: '¥59',
+                freeQuota: '基础功能免费',
+                pros: ['中文优化', '国内稳定', '百度生态'],
+                bestFor: ['medium', 'heavy']
+            }
+        };
+        
+        // DOM 元素
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const stepDots = document.querySelectorAll('.step-dot');
+        
+        // 初始化
+        function init() {
+            updateStepIndicator();
+            bindEvents();
+        }
+        
+        // 绑定事件
+        function bindEvents() {
+            // 下一步按钮
+            nextBtn.addEventListener('click', () => {
+                if (validateStep()) {
+                    if (currentStep < 3) {
+                        currentStep++;
+                        showStep(currentStep);
+                    } else {
+                        // 重新计算
+                        resetCalculator();
+                    }
+                }
+            });
+            
+            // 上一步按钮
+            prevBtn.addEventListener('click', () => {
+                if (currentStep > 1) {
+                    currentStep--;
+                    showStep(currentStep);
+                }
+            });
+            
+            // 步骤1选项
+            document.querySelectorAll('#step1 .option-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('#step1 .option-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    userData.frequency = card.dataset.value;
+                });
+            });
+            
+            // 步骤2选项
+            document.querySelectorAll('#step2 .checkbox-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('selected');
+                    const value = card.dataset.value;
+                    if (card.classList.contains('selected')) {
+                        if (!userData.purposes.includes(value)) {
+                            userData.purposes.push(value);
+                        }
+                    } else {
+                        userData.purposes = userData.purposes.filter(p => p !== value);
+                    }
+                });
+            });
+        }
+        
+        // 验证当前步骤
+        function validateStep() {
+            if (currentStep === 1 && !userData.frequency) {
+                alert('请选择你的使用频率');
+                return false;
+            }
+            if (currentStep === 2 && userData.purposes.length === 0) {
+                alert('请至少选择一个用途');
+                return false;
+            }
+            return true;
+        }
+        
+        // 显示指定步骤
+        function showStep(step) {
+            // 隐藏所有步骤
+            document.querySelectorAll('.step-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // 显示当前步骤
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            
+            // 更新按钮
+            updateButtons(step);
+            
+            // 更新步骤指示器
+            updateStepIndicator();
+            
+            // 如果是结果页，计算推荐
+            if (step === 3) {
+                calculateRecommendation();
+            }
+        }
+        
+        // 更新按钮状态
+        function updateButtons(step) {
+            if (step === 1) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+            
+            if (step === 3) {
+                nextBtn.textContent = '重新计算';
+            } else {
+                nextBtn.textContent = '下一步';
+            }
+        }
+        
+        // 更新步骤指示器
+        function updateStepIndicator() {
+            stepDots.forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index + 1 < currentStep) {
+                    dot.classList.add('completed');
+                } else if (index + 1 === currentStep) {
+                    dot.classList.add('active');
+                }
+            });
+        }
+        
+        // 计算推荐
+        function calculateRecommendation() {
+            const frequency = userData.frequency;
+            const purposes = userData.purposes;
+            
+            // 简单的推荐逻辑
+            let recommendation = pricingData.deepseek;
+            let savings = 0;
+            
+            if (frequency === 'heavy' || purposes.includes('coding')) {
+                recommendation = pricingData.chatgpt;
+            } else if (frequency === 'medium' && purposes.includes('writing')) {
+                recommendation = pricingData.wenxin;
+            }
+            
+            // 计算节省金额（简化）
+            if (recommendation.name === 'DeepSeek') {
+                savings = 120;
+            } else if (recommendation.name === '文心一言会员') {
+                savings = 81;
+            }
+            
+            // 更新结果展示
+            document.getElementById('winnerName').textContent = recommendation.name;
+            document.getElementById('winnerPrice').textContent = `预计每月：${recommendation.monthlyPrice}`;
+            document.getElementById('winnerReason').innerHTML = `
+                ✅ ${recommendation.pros[0]}<br>
+                ✅ ${recommendation.pros[1]}<br>
+                ✅ 适合你的${frequency === 'light' ? '轻度' : frequency === 'medium' ? '中度' : '重度'}使用频率
+            `;
+            
+            if (savings > 0) {
+                document.getElementById('savingsAmount').textContent = `¥${savings}`;
+                document.getElementById('savingsCard').classList.remove('hidden');
+            } else {
+                document.getElementById('savingsCard').classList.add('hidden');
+            }
+        }
+        
+        // 重置计算器
+        function resetCalculator() {
+            currentStep = 1;
+            userData = { frequency: null, purposes: [] };
+            
+            // 清除选中状态
+            document.querySelectorAll('.option-card, .checkbox-card').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            showStep(1);
+        }
+        
+        // 启动
+        init();
+    </script>
+</body>
+</html>
