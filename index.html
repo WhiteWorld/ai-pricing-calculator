@@ -453,28 +453,84 @@
             purposes: []
         };
         
-        // 价格数据（简化版）
+        // 价格数据（国内平台详细版）
         const pricingData = {
             deepseek: {
                 name: 'DeepSeek',
-                monthlyPrice: '¥0-20',
-                freeQuota: '500万token',
-                pros: ['免费额度充足', '中文能力强', '性价比高'],
-                bestFor: ['light', 'medium']
+                monthlyPrice: '¥0',
+                actualPrice: 0,
+                freeQuota: '对话完全免费',
+                pros: ['完全免费', '中文能力强', '推理能力优秀'],
+                cons: ['功能相对简单'],
+                bestFor: ['light', 'medium', 'heavy'],
+                tags: ['免费', '中文强', '推理'],
+                apiPrice: '¥2-8/百万tokens'
             },
-            chatgpt: {
-                name: 'ChatGPT Plus',
-                monthlyPrice: '¥140',
-                freeQuota: '无免费额度',
-                pros: ['功能最全', '生态丰富', 'GPT-4最强'],
-                bestFor: ['heavy']
+            doubao: {
+                name: '豆包',
+                monthlyPrice: '¥0',
+                actualPrice: 0,
+                freeQuota: '对话完全免费',
+                pros: ['完全免费', '字节生态', '多模态能力'],
+                cons: ['相对较新', '长文本一般'],
+                bestFor: ['light', 'medium'],
+                tags: ['免费', '多模态', '字节'],
+                apiPrice: '¥1-30/百万tokens'
+            },
+            kimi: {
+                name: 'Kimi',
+                monthlyPrice: '¥22',
+                actualPrice: 22,
+                freeQuota: '每日免费额度',
+                pros: ['长文档无敌(200万字)', '界面简洁', '性价比高'],
+                cons: ['高峰期响应慢', '功能相对单一'],
+                bestFor: ['document', 'reading', 'heavy'],
+                tags: ['长文本', '阅读', '文档'],
+                apiPrice: '¥12-120/百万tokens'
+            },
+            tongyi: {
+                name: '通义千问',
+                monthlyPrice: '¥19.9',
+                actualPrice: 19.9,
+                freeQuota: '基础功能免费',
+                pros: ['价格便宜', '阿里生态', '多模态能力强'],
+                cons: ['知名度相对较低'],
+                bestFor: ['light', 'medium', 'multimodal'],
+                tags: ['便宜', '多模态', '阿里'],
+                apiPrice: '¥5-100/百万tokens'
             },
             wenxin: {
-                name: '文心一言会员',
+                name: '文心一言',
                 monthlyPrice: '¥59',
+                actualPrice: 59,
+                freeQuota: '基础功能免费(限流)',
+                pros: ['中文优化好', '百度生态整合', '国内稳定'],
+                cons: ['免费版限制多', '价格较贵'],
+                bestFor: ['chinese', 'search', 'medium'],
+                tags: ['中文', '搜索', '百度'],
+                apiPrice: '¥12-120/百万tokens'
+            },
+            chatglm: {
+                name: '智谱清言',
+                monthlyPrice: '¥29',
+                actualPrice: 29,
                 freeQuota: '基础功能免费',
-                pros: ['中文优化', '国内稳定', '百度生态'],
-                bestFor: ['medium', 'heavy']
+                pros: ['国内开源代表', '学术背景强', '代码能力强'],
+                cons: ['商业化程度低', '产品体验一般'],
+                bestFor: ['code', 'academic', 'open-source'],
+                tags: ['开源', '学术', '代码'],
+                apiPrice: '¥10-100/百万tokens'
+            },
+            xinghuo: {
+                name: '讯飞星火',
+                monthlyPrice: '¥39',
+                actualPrice: 39,
+                freeQuota: '基础功能免费',
+                pros: ['语音技术领先', '办公场景优化', '企业应用多'],
+                cons: ['通用对话一般', '价格相对较高'],
+                bestFor: ['voice', 'office', 'enterprise'],
+                tags: ['语音', '办公', '企业'],
+                apiPrice: '¥15-120/百万tokens'
             }
         };
         
@@ -599,43 +655,133 @@
             });
         }
         
-        // 计算推荐
+        // 智能推荐算法
         function calculateRecommendation() {
             const frequency = userData.frequency;
             const purposes = userData.purposes;
             
-            // 简单的推荐逻辑
-            let recommendation = pricingData.deepseek;
-            let savings = 0;
+            // 计算每个平台的推荐分数
+            let scores = [];
             
-            if (frequency === 'heavy' || purposes.includes('coding')) {
-                recommendation = pricingData.chatgpt;
-            } else if (frequency === 'medium' && purposes.includes('writing')) {
-                recommendation = pricingData.wenxin;
+            for (let [key, platform] of Object.entries(pricingData)) {
+                let score = 0;
+                let reasons = [];
+                
+                // 1. 基础分：免费平台得分高
+                if (platform.actualPrice === 0) {
+                    score += 30;
+                    reasons.push('完全免费');
+                } else if (platform.actualPrice <= 20) {
+                    score += 20;
+                    reasons.push('价格便宜');
+                } else if (platform.actualPrice <= 40) {
+                    score += 10;
+                }
+                
+                // 2. 场景匹配
+                if (purposes.includes('document') && platform.tags.includes('长文本')) {
+                    score += 25;
+                    reasons.push('长文档处理强');
+                }
+                
+                if (purposes.includes('writing') && platform.tags.includes('中文')) {
+                    score += 20;
+                    reasons.push('中文写作优秀');
+                }
+                
+                if (purposes.includes('coding') && platform.tags.includes('代码')) {
+                    score += 20;
+                    reasons.push('代码能力强');
+                }
+                
+                if (purposes.includes('chat') && platform.actualPrice === 0) {
+                    score += 15;
+                    reasons.push('免费聊天');
+                }
+                
+                // 3. 使用频率匹配
+                if (frequency === 'heavy' && platform.bestFor.includes('heavy')) {
+                    score += 10;
+                }
+                
+                // 4. 特殊标签加分
+                if (platform.tags.includes('多模态') && purposes.includes('image')) {
+                    score += 15;
+                    reasons.push('支持图像');
+                }
+                
+                scores.push({
+                    key: key,
+                    platform: platform,
+                    score: score,
+                    reasons: reasons
+                });
             }
             
-            // 计算节省金额（简化）
-            if (recommendation.name === 'DeepSeek') {
-                savings = 120;
-            } else if (recommendation.name === '文心一言会员') {
-                savings = 81;
+            // 按分数排序
+            scores.sort((a, b) => b.score - a.score);
+            
+            // 获取前三名
+            const top3 = scores.slice(0, 3);
+            const winner = top3[0];
+            
+            // 计算节省金额
+            let savings = 0;
+            if (winner.platform.actualPrice === 0) {
+                // 如果推荐免费，节省对比最贵付费平台
+                savings = 59; // 对比文心一言
+            } else if (winner.platform.actualPrice < 30) {
+                savings = 30;
             }
             
             // 更新结果展示
-            document.getElementById('winnerName').textContent = recommendation.name;
-            document.getElementById('winnerPrice').textContent = `预计每月：${recommendation.monthlyPrice}`;
-            document.getElementById('winnerReason').innerHTML = `
-                ✅ ${recommendation.pros[0]}<br>
-                ✅ ${recommendation.pros[1]}<br>
-                ✅ 适合你的${frequency === 'light' ? '轻度' : frequency === 'medium' ? '中度' : '重度'}使用频率
-            `;
+            document.getElementById('winnerName').textContent = winner.platform.name;
+            document.getElementById('winnerPrice').textContent = `预计每月：${winner.platform.monthlyPrice}`;
             
+            // 推荐理由
+            let reasonHTML = '';
+            if (winner.reasons.length > 0) {
+                winner.reasons.slice(0, 3).forEach(reason => {
+                    reasonHTML += `✅ ${reason}<br>`;
+                });
+            }
+            reasonHTML += `✅ 适合${frequency === 'light' ? '轻度' : frequency === 'medium' ? '中度' : '重度'}使用`;
+            document.getElementById('winnerReason').innerHTML = reasonHTML;
+            
+            // 更新备选方案
+            updateAlternatives(top3.slice(1));
+            
+            // 节省金额
             if (savings > 0) {
                 document.getElementById('savingsAmount').textContent = `¥${savings}`;
                 document.getElementById('savingsCard').classList.remove('hidden');
             } else {
                 document.getElementById('savingsCard').classList.add('hidden');
             }
+        }
+        
+        // 更新备选方案显示
+        function updateAlternatives(alternatives) {
+            const altContainer = document.querySelector('.alternatives');
+            if (!alternatives || alternatives.length === 0) {
+                altContainer.innerHTML = '';
+                return;
+            }
+            
+            let html = '<div class="alt-title">🥈 备选方案</div>';
+            alternatives.forEach(alt => {
+                html += `
+                    <div class="alt-card">
+                        <div class="alt-info">
+                            <div class="alt-name">${alt.platform.name}</div>
+                            <div class="alt-desc">${alt.platform.pros.slice(0, 2).join('、')}</div>
+                        </div>
+                        <div class="alt-price">${alt.platform.monthlyPrice}</div>
+                    </div>
+                `;
+            });
+            
+            altContainer.innerHTML = html;
         }
         
         // 重置计算器
